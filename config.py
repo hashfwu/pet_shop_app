@@ -48,16 +48,16 @@ N8N_API_KEY = _secrets.get("N8N_API_KEY", "")
 NGROK_URL = _require("NGROK_URL")
 
 # ── WEBHOOKS N8N ──────────────────────────────────────────────
-WEBHOOK_RESERVA_CITA = f"{NGROK_URL}/webhook/reserva-cita"
-WEBHOOK_RECOMENDAR_PROD = f"{NGROK_URL}/webhook/recomendar-productos"
+WEBHOOK_RESERVA_CITA = f"{NGROK_URL}/webhook/reserva_cita"
+WEBHOOK_RECOMENDAR_PROD = f"{NGROK_URL}/webhook/recomendar_productos"
 WEBHOOK_AGENTES_ESTADO = f"{NGROK_URL}/webhook/agentes/estado"
 WEBHOOK_AGENTES_TOGGLE = f"{NGROK_URL}/webhook/agentes/toggle"
 WEBHOOK_AGENTES_LOGS = f"{NGROK_URL}/webhook/agentes/logs"
 WEBHOOK_METRICAS_HOY = f"{NGROK_URL}/webhook/metricas/hoy"
 WEBHOOK_ALERTAS = f"{NGROK_URL}/webhook/alertas"
 WEBHOOK_TELEGRAM_MENSAJES = f"{NGROK_URL}/webhook/telegram/mensajes"
-WEBHOOK_AGENDA_GROOMERS = f"{NGROK_URL}/webhook/agenda-groomers"
-WEBHOOK_REPORTE_DIARIO = f"{NGROK_URL}/webhook/reporte-diario"
+WEBHOOK_AGENDA_GROOMERS = f"{NGROK_URL}/webhook/agenda_groomers"
+WEBHOOK_REPORTE_DIARIO = f"{NGROK_URL}/webhook/reporte_diario"
 
 # ── EMAIL / SMTP ──────────────────────────────────────────────
 SMTP_HOST = _secrets.get("SMTP_HOST", "smtp.gmail.com")
