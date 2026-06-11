@@ -56,9 +56,8 @@ WEBHOOK_AGENTES_LOGS = f"{NGROK_URL}/webhook/agentes/logs"
 WEBHOOK_METRICAS_HOY = f"{NGROK_URL}/webhook/metricas/hoy"
 WEBHOOK_ALERTAS = f"{NGROK_URL}/webhook/alertas"
 WEBHOOK_TELEGRAM_MENSAJES = f"{NGROK_URL}/webhook/telegram/mensajes"
-WEBHOOK_RESUMEN_DIARIO = f"{NGROK_URL}/webhook/resumen-diario"
 WEBHOOK_AGENDA_GROOMERS = f"{NGROK_URL}/webhook/agenda-groomers"
-
+WEBHOOK_REPORTE_DIARIO = f"{NGROK_URL}/webhook/reporte-diario"
 
 # ── EMAIL / SMTP ──────────────────────────────────────────────
 SMTP_HOST = _secrets.get("SMTP_HOST", "smtp.gmail.com")
