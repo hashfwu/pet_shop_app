@@ -19,14 +19,19 @@ st.markdown(
 )
 
 # Callbacks for toggles and executions
+
+
 def handle_toggle(workflow_id, action):
     with st.spinner("Modificando estado de agente..."):
         res = client.toggle_agente(workflow_id, action)
+        if isinstance(res, list) and len(res) > 0:
+            res = res[0]
         if res["success"]:
             st.success(f"Éxito: {res['message']}")
             st.rerun()
         else:
             st.error(f"Error: {res['message']}")
+
 
 def handle_trigger(workflow_id):
     if workflow_id == "Agente_03":
@@ -41,13 +46,16 @@ def handle_trigger(workflow_id):
         with st.spinner("Ejecutando Agente 06 (Agenda Groomers)..."):
             res = client.ejecutar_agenda_groomers()
             if res["success"]:
-                st.success(f"¡Agenda de Groomers generada y distribuida! {res['reasignaciones']} reasignaciones realizadas.")
+                st.success(f"¡Agenda de Groomers generada y distribuida! {
+                           res['reasignaciones']} reasignaciones realizadas.")
                 # Show results in a clean table
                 if res["citas_agendadas"]:
                     import pandas as pd
-                    st.dataframe(pd.DataFrame(res["citas_agendadas"])[["hora_inicio", "mascota_nombre", "servicio_nombre", "groomer_nombre"]])
+                    st.dataframe(pd.DataFrame(res["citas_agendadas"])[
+                                 ["hora_inicio", "mascota_nombre", "servicio_nombre", "groomer_nombre"]])
             else:
                 st.error(f"Error al ejecutar: {res['message']}")
+
 
 # Fetch list of agents
 agents_list = client.obtener_estado_agentes()

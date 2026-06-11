@@ -119,38 +119,105 @@ def _init_agent_cache():
         }
 
 
+_AGENT_TO_N8N_ID = {
+    "Agente_01": "Re6w21VjflzBmJ8i",
+    "Agente_02": "S9bgCTNbWnysGh86",
+    "Agente_03": "YAFZeQ3eixRQVSUh",
+    "Agente_04": "WetDxrskDBgoQ6Xu",
+    "Agente_06": "iw7I04xti0jBRdui",
+    "Agente_07": "dgaL6XPoFaXYvaes",
+}
+
+
+def _n8n_id_to_agent_id(n8n_id):
+    return n8n_id.replace("agent-", "Agente_")
+
+def _agent_id_to_n8n_id(agent_id):
+    return agent_id.replace("Agente_", "agent-")
+
+
+def _get_real_statuses():
+    """Consulta GET /api/v1/workflows/{id} para cada agente y devuelve su estado real."""
+    statuses = {}
+    if not config.N8N_API_KEY:
+        return statuses
+    for agent_id, n8n_id in _AGENT_TO_N8N_ID.items():
+        try:
+            url = f"{config.N8N_BASE_URL}/api/v1/workflows/{n8n_id}"
+            resp = requests.get(url, headers={"X-N8N-API-KEY": config.N8N_API_KEY}, timeout=5)
+            if resp.status_code == 200:
+                statuses[agent_id] = "activo" if resp.json().get("active") else "inactivo"
+        except Exception:
+            pass
+    return statuses
+
+
 def obtener_estado_agentes():
-    """Agente 07 - GET /agentes/estado"""
+    """Obtiene estado de agentes desde n8n API, webhook o caché local."""
     _init_agent_cache()
+    real_statuses = _get_real_statuses()
+
     try:
-        return _call_webhook(config.WEBHOOK_AGENTES_ESTADO, "GET")
+        resp = _call_webhook(config.WEBHOOK_AGENTES_ESTADO, "GET")
+        agentes = resp.get("agentes", [])
+        result = []
+        for a in agentes:
+            agent_id = _n8n_id_to_agent_id(a["id"])
+            cached = st.session_state.agentes_estado_local.get(agent_id, {})
+            result.append({
+                "id": agent_id,
+                "nombre": a["nombre"],
+                "estado": real_statuses.get(agent_id) or cached.get("estado", a["estado"]),
+                "ultimo_disparo": cached.get("ultimo_disparo", "—"),
+                "ejecuciones_hoy": cached.get("ejecuciones_hoy", 0),
+            })
+        return result
     except Exception:
-        # Fallback local
-        return list(st.session_state.agentes_estado_local.values())
+        result = list(st.session_state.agentes_estado_local.values())
+        for agent in result:
+            if agent["id"] in real_statuses:
+                agent["estado"] = real_statuses[agent["id"]]
+        return result
 
 
 def toggle_agente(workflow_id, action):
-    """Agente 07 - POST /agentes/toggle"""
+    """Activa/desactiva un workflow vía REST API de n8n, con fallback local."""
     _init_agent_cache()
-    payload = {"workflow_id": workflow_id, "action": action}
-    try:
-        return _call_webhook(config.WEBHOOK_AGENTES_TOGGLE, "POST", payload)
-    except Exception:
-        # Fallback local
-        if workflow_id in st.session_state.agentes_estado_local:
-            status_val = "activo" if action == "activate" else "inactivo"
-            st.session_state.agentes_estado_local[workflow_id]["estado"] = status_val
-            return {"success": True, "message": f"Agente {workflow_id} cambiado a {status_val} (Local)"}
-        return {"success": False, "message": "Agente no encontrado en cache local."}
+    status_val = "activo" if action == "activate" else "inactivo"
+    n8n_id = _AGENT_TO_N8N_ID.get(workflow_id)
+
+    if config.N8N_API_KEY and n8n_id:
+        try:
+            endpoint = f"workflows/{n8n_id}/{'activate' if action == 'activate' else 'deactivate'}"
+            url = f"{config.N8N_BASE_URL}/api/v1/{endpoint}"
+            resp = requests.post(url, headers={"X-N8N-API-KEY": config.N8N_API_KEY}, timeout=10)
+            if resp.status_code in (200, 201, 204):
+                st.session_state.agentes_estado_local[workflow_id]["estado"] = status_val
+                return {"success": True, "message": f"Agente {workflow_id} {status_val} en n8n"}
+        except Exception:
+            pass
+
+    # Fallback local
+    if workflow_id in st.session_state.agentes_estado_local:
+        st.session_state.agentes_estado_local[workflow_id]["estado"] = status_val
+        return {"success": True, "message": f"Agente {workflow_id} cambiado a {status_val} (Local)"}
+    return {"success": False, "message": "Agente no encontrado en cache local."}
 
 
 def obtener_logs_agente(workflow_id, limit=10):
     """Agente 07 - GET /agentes/logs"""
-    payload = {"workflow_id": workflow_id, "limit": limit}
     try:
-        return _call_webhook(config.WEBHOOK_AGENTES_LOGS, "GET", payload)
+        resp = _call_webhook(config.WEBHOOK_AGENTES_LOGS, "GET")
+        logs = []
+        for row in (resp or [])[:limit]:
+            logs.append({
+                "ejecucion_id": str(row.get("id", "")),
+                "timestamp": str(row.get("fecha_envio", "")),
+                "estado": "success" if row.get("estado") == "enviada" else "error",
+                "detalles": str(row.get("mensaje", "")),
+            })
+        return logs
     except Exception:
-        # Fallback local mock logs
         import random
         logs = []
         status_opts = ["success", "success", "success", "error"]
