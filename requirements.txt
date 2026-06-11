@@ -1,0 +1,8 @@
+streamlit
+psycopg2-binary
+python-dotenv
+requests
+pandas
+plotly
+altair
+python-telegram-bot
