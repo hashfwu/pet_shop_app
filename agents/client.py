@@ -152,9 +152,9 @@ def obtener_logs_agente(workflow_id, limit=10):
         return logs
 
 def ejecutar_resumen_diario():
-    """Agente 03 manual - POST /resumen-diario"""
+    """Agente 03 manual - GET /reporte-diario"""
     try:
-        return _call_webhook(config.WEBHOOK_RESUMEN_DIARIO, "POST")
+        return _call_webhook(config.WEBHOOK_REPORTE_DIARIO, "GET")
     except Exception:
         # Fallback local: generate summary directly using Python
         metrics = queries.get_daily_metrics()
