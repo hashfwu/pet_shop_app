@@ -13,7 +13,7 @@ def get_connection():
         user=config.DB_USER,
         password=config.DB_PASSWORD,
         sslmode=config.DB_SSL_MODE,
-        connect_timeout=3
+        connect_timeout=5
     )
     return conn
 
